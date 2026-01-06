@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.31)
-project(term_engine LANGUAGES CXX VERSION 0.0.3)
+project(term_engine LANGUAGES CXX VERSION 0.0.4)
 include(FetchContent)
 
 option(TERM_ENGINE_BUILD_DOCS "Set to OFF to disable build docs" ON)
 option(TERM_ENGINE_BUILD_EXAMPLES "Set to ON to build examples" OFF)
-option(TERM_ENGINE_BUILD_TESTS "Set to ON to build tests" ON)
+option(TERM_ENGINE_BUILD_TESTS "Set to ON to build tests" OFF)
 
 # --- Зависимости --- #
 
@@ -26,18 +26,7 @@ FetchContent_Declare(glm
 FetchContent_MakeAvailable(glm)
 
 # --- Term Engine Library --- #
-
-# Настройка экспорта compile_commands, и импорта
-# стандартных заголовочных файлов.
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(
-    CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES
-    ${CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES}
-)
-set(
-    CMAKE_C_STANDARD_INCLUDE_DIRECTORIES
-    ${CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES}
-)
 
 # Установка стандарта.
 set(CMAKE_CXX_STANDARD 23)
@@ -107,6 +96,6 @@ if (TERM_ENGINE_BUILD_TESTS)
     include(tests/CMakeLists.txt)
 endif ()
 
-if(TERM_ENGINE_BUILD_EXAMPLES)
+if (TERM_ENGINE_BUILD_EXAMPLES)
     add_subdirectory(examples)
-endif()
+endif ()
