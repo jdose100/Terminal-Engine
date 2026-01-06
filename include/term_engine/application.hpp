@@ -3,8 +3,8 @@
 // WARN. Как удалять сущности из приложения???
 
 #include "term_engine/entity.hpp"
-#include "term_engine/error.hpp"
 #include "term_engine/events.hpp"
+#include "term_engine/world.hpp"
 
 #include <cstddef>
 #include <memory>
@@ -45,12 +45,20 @@ class Application final {
     /*!
         @brief Добавление новой сущности в приложение.
         @param[in] entity Сущность для добавления.
+        @throw AnyException любое исключение, вызваное Entity::init.
     */
     template <typename T = Entity>
-    inline constexpr void addEntity(std::shared_ptr<T> &entity) noexcept {
+    inline constexpr void addEntity(std::shared_ptr<T> &entity) {
         static_assert(std::is_base_of<Entity, T>::value,
                       "T must be derived from Entity");
-        _addEntity(static_cast<EntityPointer>(entity), typeid(T).hash_code());
+        m_world.addEntity(entity, typeid(T).hash_code());
+
+        if (m_entities_deferred_initialization.should_store_entities) {
+            m_entities_deferred_initialization.entities_for_init.push_back(
+                entity);
+        } else {
+            entity->init();
+        }
     }
 
     /*!
@@ -58,11 +66,10 @@ class Application final {
         @param[in] entity Сущность для удаления.
     */
     template <typename T = Entity>
-    inline constexpr void
-    deleteEntity(std::shared_ptr<T> &entity) noexcept {
+    inline constexpr void deleteEntity(std::shared_ptr<T> &entity) noexcept {
         static_assert(std::is_base_of<Entity, T>::value,
                       "T must be derived from Entity");
-        _deleteEntity(static_cast<EntityPointer>(entity));
+        m_world.deleteEntity(entity);
     }
 
     /*!
@@ -74,17 +81,13 @@ class Application final {
         @return Ссылка на сущность.
     */
     template <typename T>
-    inline std::shared_ptr<T> getEntity(size_t idx = 0) const {
+    inline constexpr std::shared_ptr<T> getEntity(size_t idx = 0) const {
         static_assert(std::is_base_of<Entity, T>::value,
                       "T must be derived from Entity");
 
-        const auto hash = typeid(T).hash_code();
-        if (!m_hashed_entities.count(hash)) {
-            throw EntityNotFound<T>{};
-        }
-
-        auto value = m_hashed_entities.at(hash).at(idx);
-        return std::dynamic_pointer_cast<T>(value);
+        const auto &type = typeid(T);
+        return std::dynamic_pointer_cast<T>(
+            m_world.getEntity(type.hash_code(), type.name(), idx));
     }
 
     /*!
@@ -94,68 +97,39 @@ class Application final {
         кол-во зарегистрированных сущностей в приложении.
     */
     template <typename T>
-    inline std::vector<std::shared_ptr<T>> getEntities() const {
+    inline constexpr std::vector<std::shared_ptr<T>> getEntities() const {
         static_assert(std::is_base_of<Entity, T>::value,
                       "T must be derived from Entity");
-
-        // Возвращение массива сущностей, где можно искать сущность с типом T,
-        // или сущность которая наследуется от T.
-        const auto init_value = [this]() -> const std::vector<EntityPointer> {
-            // Получение хеша.
-            const auto hash = typeid(T).hash_code();
-
-            // Если тип T хэширован, то возвращаем
-            // хэшированный массив.
-            if (m_hashed_entities.count(hash)) {
-                return m_hashed_entities.at(hash);
-            }
-
-            // Тип T не хэширован, возвращаем общий массив
-            // всех сущностей.
-            return m_entities;
-        };
-        const auto value = init_value();
-
-        // Инициализация вектора.
-        std::vector<std::shared_ptr<T>> return_value;
-
-        // Цикл, который ищет все возможные сущности, которые являются T
-        // или наследуются от T. Все найденные сущности сохраняет в
-        // return_value.
-        for (const auto &item : value) {
-            // Получение ссылки.
-            std::shared_ptr<T> pointer = std::dynamic_pointer_cast<T>(item);
-
-            // Если не nullptr, то значит что ссылка ссылается
-            // либо на объект с типом T, либо на дочерний класс T.
-            if (pointer != nullptr) {
-                return_value.push_back(pointer);
-            }
-        }
-        return return_value;
-
-        // Вариант оптимизации по скорости поиска (с доп. затратами на память).
-        // Это создать ещё 1 хэш таблицу и засовывает в неё новые, не
-        // хэшированные типы. Или использовать уже существующую таблицу
-        // `m_hashed_entities`.
+        return m_world.getEntities<T>();
     }
 
   private:
-    //! Список сущностей, все они обновляются каждый кадр.
-    std::vector<EntityPointer> m_entities;
+    //! Структура, хранящая флаг указывающий что инициализация
+    //! сущностей должна быть отложена. А также хранащая массив
+    //! ссылок на сущностей, инициализация которых была отложена.
+    //!
+    //! Инициализация откладывается до тех пор, пока
+    //! не будет вызванна функция Application::run.
+    struct EntitiesDeferredInitialization {
+        //! Вектор, хранящий ссылки на сущностей,
+        //! инициализация которых была отложена.
+        std::vector<EntityPointer> entities_for_init;
 
-    //! Массив сущностей, которых можно отрисовать.
-    std::vector<EntityPointer> m_drawable_entities;
+        //! Флаг, указывающий инициализировать
+        //! сущности при добавлении. Или сохранить
+        //! ссылки на сущности для того, чтобы отложить
+        //! их инициализацию до вызова метода
+        //! Application::run.
+        bool should_store_entities = true;
+    };
 
-    //! Хэш мапа сущностей, позволяет получить сущностей по хешу типа.
-    std::unordered_map<size_t, std::vector<EntityPointer>> m_hashed_entities;
+    EntitiesDeferredInitialization m_entities_deferred_initialization;
+
+    //! Мир для хранения сущностей.
+    World m_world;
 
     //! Отрисовка.
     ftxui::Element render();
-
-    void _addEntity(EntityPointer entity, size_t hash) noexcept;
-
-    void _deleteEntity(const EntityPointer entity) noexcept;
 
     Application() {}
 };

@@ -8,12 +8,12 @@
 using namespace tengine;
 using namespace std;
 
-class GetEntity : public Entity {
+struct GetEntity : public Entity {
     void update([[maybe_unused]] double) override {}
     void init() override {}
 };
 
-class NotGetEntity : public Entity {
+struct NotGetEntity : public Entity {
     void update([[maybe_unused]] double) override {}
     void init() override {}
 };

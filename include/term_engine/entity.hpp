@@ -13,7 +13,6 @@ namespace tengine {
 
 /*!
     @brief Минимальное представление сущности.
-    @interface Entity
     @details
     Класс, являющийся минимальной единицой
     объекта внутри игрового движка.
@@ -23,6 +22,7 @@ namespace tengine {
 */
 class Entity {
     friend class Application;
+    friend struct World;
 
   public:
     //! Позиция сущности в мире.
@@ -45,10 +45,15 @@ class Entity {
     Entity(int t_depth) : depth{t_depth}, is_drawable{true} {}
 
     //! Конструктор. Создаёт **не** рисуемую сущность.
-    Entity(glm::vec2 t_pos) : position{t_pos}, is_drawable{false} {}
+    Entity(glm::vec2 t_pos, bool t_is_drawable = false)
+        : position{t_pos}, is_drawable{t_is_drawable} {}
 
-    //! Конструктор по умолчанию. Создаёт **не** рисуемую сущность.
-    Entity() : is_drawable{false} {}
+    //! Конструктор по умолчанию. Создаём по умолчанию **не** рисуемую
+    //! сущность, но создаст рисуемую если передать *true*.
+    Entity(bool t_is_drawable = false) : is_drawable{t_is_drawable} {}
+
+    //! Виртуальный деструктор. Можно переопределить.
+    virtual ~Entity() {}
 
     /*!
         @brief Инициализация сущности.

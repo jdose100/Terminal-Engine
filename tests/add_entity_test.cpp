@@ -8,7 +8,7 @@
 using namespace tengine;
 using namespace std;
 
-class AddTestEntity : public Entity {
+struct AddTestEntity : public Entity {
     void update([[maybe_unused]] double) override {}
     void init() override {}
 };
