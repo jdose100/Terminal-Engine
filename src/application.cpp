@@ -32,6 +32,7 @@ void Application::run() {
     for (auto &entity : m_entities_deferred_initialization.entities_for_init) {
         entity->init();
     }
+    m_entities_deferred_initialization.entities_for_init.clear();
 
     // Комнонет отвечающий за отрисовку и обработку событий.
     auto component = ftxui::Renderer([this] { return this->render(); });
