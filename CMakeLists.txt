@@ -5,6 +5,7 @@ include(FetchContent)
 option(TERM_ENGINE_BUILD_DOCS "Set to OFF to disable build docs" ON)
 option(TERM_ENGINE_BUILD_EXAMPLES "Set to ON to build examples" OFF)
 option(TERM_ENGINE_BUILD_TESTS "Set to ON to build tests" OFF)
+option(TERM_ENGINE_DEV "Set to ON to enable dev mode" OFF)
 
 # --- Зависимости --- #
 
@@ -26,7 +27,6 @@ FetchContent_Declare(glm
 FetchContent_MakeAvailable(glm)
 
 # --- Term Engine Library --- #
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Установка стандарта.
 set(CMAKE_CXX_STANDARD 23)
@@ -38,14 +38,15 @@ set(CMAKE_COMPILE_WARNING_AS_ERROR ON)
 
 # Создание библиотеки.
 file(GLOB ROOT_SOURCE src/*.cpp)
-add_library(term_engine ${ROOT_SOURCE})
-add_library(terminal::engine ALIAS term_engine)
+add_library(${PROJECT_NAME} ${ROOT_SOURCE})
+add_library(terminal::engine ALIAS ${PROJECT_NAME})
 
-target_include_directories(term_engine
+target_include_directories(${PROJECT_NAME}
     PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    PUBLIC $<INSTALL_INTERFACE:include>
 )
 
-target_link_libraries(term_engine
+target_link_libraries(${PROJECT_NAME}
   # FTXUI
   PUBLIC ftxui::screen
   PUBLIC ftxui::dom
@@ -84,18 +85,13 @@ endif ()
 # --- Добавление тестов и примеров --- #
 
 if (TERM_ENGINE_BUILD_TESTS)
-    # Получение Catch 2
-    FetchContent_Declare(
-        Catch2
-        GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-        GIT_TAG        v3.3.1
-    )
-    FetchContent_MakeAvailable(Catch2)
-
-    # Получение тестов.
-    include(tests/CMakeLists.txt)
+    add_subdirectory(tests)
 endif ()
 
 if (TERM_ENGINE_BUILD_EXAMPLES)
     add_subdirectory(examples)
+endif ()
+
+if (TERM_ENGINE_DEV)
+    include(cmake/dev_setup.cmake)
 endif ()
