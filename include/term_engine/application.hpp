@@ -5,6 +5,7 @@
 #include "term_engine/entity.hpp"
 #include "term_engine/events.hpp"
 #include "term_engine/world.hpp"
+#include "term_engine/triggers.hpp"
 
 #include <cstddef>
 #include <memory>
@@ -51,11 +52,11 @@ class Application final {
     inline constexpr void addEntity(std::shared_ptr<T> &entity) {
         static_assert(std::is_base_of<Entity, T>::value,
                       "T must be derived from Entity");
-        m_world.addEntity(entity, typeid(T).hash_code());
+        m_world.addEntity(std::dynamic_pointer_cast<Entity>(entity), typeid(T).hash_code());
 
         if (m_entities_deferred_initialization.should_store_entities) {
             m_entities_deferred_initialization.entities_for_init.push_back(
-                entity);
+                std::dynamic_pointer_cast<Entity>(entity));
         } else {
             entity->init();
         }
