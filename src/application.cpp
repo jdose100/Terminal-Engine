@@ -34,7 +34,7 @@ void Application::run() {
     }
     m_entities_deferred_initialization.entities_for_init.clear();
 
-    // Комнонет отвечающий за отрисовку и обработку событий.
+    // Компонент, отвечающий за отрисовку и обработку событий.
     auto component = ftxui::Renderer([this] { return this->render(); });
     component |= ftxui::CatchEvent([this](ftxui::Event event) {
         this->events.m_events.push_back(event);
@@ -57,6 +57,17 @@ void Application::run() {
             entity->update(static_cast<double>(dt.count()));
         }
 
+        // Обработка триггеров.
+        for (auto &trigger : m_world.triggers) {
+            for (auto &entity : m_world.entities) {
+                if ((trigger->mask & entity->trigger_mask) == 0) {
+                    continue;
+                } else if (trigger->check(entity)) {
+                    entity->onTrigger(trigger);
+                }
+            }
+        }
+
         // Обновление времени тика.
         last_tick = update_time;
 
@@ -72,8 +83,8 @@ void Application::run() {
         }
 
         // Получение времени.
-        auto draw_end_time = std::chrono::steady_clock::now();
-        auto draw_duration = std::chrono::duration_cast<milliseconds>(
+        const auto draw_end_time = std::chrono::steady_clock::now();
+        const auto draw_duration = std::chrono::duration_cast<milliseconds>(
             draw_end_time - update_time);
         ++frame_counter;
 

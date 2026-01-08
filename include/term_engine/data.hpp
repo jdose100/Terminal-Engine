@@ -3,12 +3,11 @@
 
 #pragma once
 
-// #include <ca>
-
 #include <ftxui/screen/color.hpp>
 #include <ftxui/screen/pixel.hpp>
 
 #include <vector>
+// #include <vect>
 
 namespace tengine {
 
@@ -30,9 +29,9 @@ struct Pixel : public ftxui::Pixel {
 };
 
 //! Изображение для отрисовки.
-typedef std::vector<Pixel> Image;
+using Image = std::vector<Pixel>;
 
 //! Цвет.
-typedef ftxui::Color Color;
+using Color = ftxui::Color;
 
 } // namespace tengine

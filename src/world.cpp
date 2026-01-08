@@ -2,6 +2,8 @@
 #include "term_engine/entity.hpp"
 #include "term_engine/error.hpp"
 
+#include <algorithm>
+
 using tengine::EntityPointer;
 using tengine::World;
 using namespace std;
@@ -16,10 +18,11 @@ void World::addEntity(EntityPointer entity, size_t hash) noexcept {
     if (entity->is_drawable) {
         drawable_entities.push_back(entity);
 
-        std::stable_sort(drawable_entities.begin(), drawable_entities.end(),
-                         [](EntityPointer entity1, EntityPointer entity2) {
-                             return entity1->depth < entity2->depth;
-                         });
+        std::stable_sort(
+            drawable_entities.begin(), drawable_entities.end(),
+            [](const EntityPointer entity1, const EntityPointer entity2) {
+                return entity1->draw_depth < entity2->draw_depth;
+            });
     }
 
     // Отправляем entity в cловарь по типу.

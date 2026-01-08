@@ -26,8 +26,12 @@ FetchContent_Declare(glm
 )
 FetchContent_MakeAvailable(glm)
 
-# --- Term Engine Library --- #
+# --- Включение DEV режима --- #
+if (TERM_ENGINE_DEV)
+    include(cmake/dev_setup.cmake)
+endif ()
 
+# --- Term Engine Library --- #
 # Установка стандарта.
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -44,6 +48,8 @@ add_library(terminal::engine ALIAS ${PROJECT_NAME})
 target_include_directories(${PROJECT_NAME}
     PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     PUBLIC $<INSTALL_INTERFACE:include>
+    # PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
+    # PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
 target_link_libraries(${PROJECT_NAME}
@@ -90,8 +96,4 @@ endif ()
 
 if (TERM_ENGINE_BUILD_EXAMPLES)
     add_subdirectory(examples)
-endif ()
-
-if (TERM_ENGINE_DEV)
-    include(cmake/dev_setup.cmake)
 endif ()

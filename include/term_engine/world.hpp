@@ -1,5 +1,6 @@
 #pragma once
 
+#include "term_engine/triggers.hpp"
 #include "term_engine/entity.hpp"
 
 #include <memory>
@@ -23,6 +24,17 @@ struct World {
 
     //! Хэш мапа сущностей, позволяет получить сущностей по хешу типа.
     std::unordered_map<size_t, std::vector<EntityPointer>> hashed_entities;
+    
+    //! Триггеры мира.
+    std::vector<std::shared_ptr<ITrigger>> triggers;
+    
+    /*!
+        @brief Добавляет триггер в мир.
+        @param[in] trigger триггер для добавления.
+    */
+    inline constexpr void addTrigger(std::shared_ptr<ITrigger> &trigger) {
+        triggers.push_back(trigger);
+    }
 
     /*!
         @brief Добавление сущности в мир.

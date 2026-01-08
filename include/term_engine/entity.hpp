@@ -1,24 +1,22 @@
 #pragma once
 
 #include "term_engine/data.hpp"
+#include "term_engine/math.hpp"
 
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/dom/node.hpp>
 
-#include <glm/ext/vector_float2.hpp>
-
 #include <memory>
 
 namespace tengine {
+
+class ITrigger;
 
 /*!
     @brief Минимальное представление сущности.
     @details
     Класс, являющийся минимальной единицой
     объекта внутри игрового движка.
-
-    Для наследования необходимо обязательно переопределить
-    методы **init** и **update**.
 */
 class Entity {
     friend class Application;
@@ -26,26 +24,32 @@ class Entity {
 
   public:
     //! Позиция сущности в мире.
-    glm::vec2 position{0.0f};
+    math::vec2 position{0.0f};
+
+    //! Маска, определяющая с какими
+    //! триггерами может взаимодействовать
+    //! сущность.
+    uint64_t trigger_mask = 0;
 
     /*!
         @brief Определяет слой отрисовки сущности.
         @details Чем ниже число, тем раньше оно будет отрисованно.
     */
-    const int depth = 0;
+    const int draw_depth = 0;
 
     //! Возможно ли рисовать эту сущность.
     const bool is_drawable;
 
     //! Конструктор. Создаёт рисуемую сущность.
-    Entity(glm::vec2 t_pos, int t_depth)
-        : position{t_pos}, depth{t_depth}, is_drawable{true} {}
+    Entity(math::vec2 t_pos, int t_depth)
+        : position{t_pos}, draw_depth{t_depth}, is_drawable{true} {}
 
     //! Конструктор. Создаёт рисуемую сущность.
-    Entity(int t_depth) : depth{t_depth}, is_drawable{true} {}
+    Entity(int t_depth) : draw_depth{t_depth}, is_drawable{true} {}
 
-    //! Конструктор. Создаёт **не** рисуемую сущность.
-    Entity(glm::vec2 t_pos, bool t_is_drawable = false)
+    //! Конструктор. Создаёт **не** рисуемую сущность по умолчанию.
+    //! Может создать рисуемую сущность если передать *true*.
+    Entity(math::vec2 t_pos, bool t_is_drawable = false)
         : position{t_pos}, is_drawable{t_is_drawable} {}
 
     //! Конструктор по умолчанию. Создаём по умолчанию **не** рисуемую
@@ -62,13 +66,13 @@ class Entity {
         В отличии от конструктора гарантируется наличие
         инициализированного Application.
     */
-    virtual void init() = 0;
+    virtual void init() {};
 
     /*!
         @brief Обновление сущности.
         @param[in] delta_time delta time.
     */
-    virtual void update(double delta_time) = 0;
+    virtual void update([[maybe_unused]] double delta_time) {};
 
     /*!
         @brief Отрисовка сущности.
@@ -77,6 +81,16 @@ class Entity {
         если она является *drawable*.
     */
     virtual const Image render() { return Image{}; }
+
+    /*!
+        @brief Реакция сущности на триггер.
+        @param[in] trigger триггер, который сработал.
+        @details
+        Данная функция вызывается, когда trigger сработал
+        уменно на эту сущность (this).
+    */
+    virtual void
+    onTrigger([[maybe_unused]] std::shared_ptr<ITrigger> &trigger) {}
 
   private:
     //! Проверяет что this и ptr ссылаются на 1 и тот же участок памяти.
@@ -93,6 +107,6 @@ class Entity {
 };
 
 //! Умная ссылка на Entity.
-typedef std::shared_ptr<Entity> EntityPointer;
+using EntityPointer = std::shared_ptr<Entity>;
 
 } // namespace tengine

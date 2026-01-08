@@ -4,8 +4,8 @@
 
 #include "term_engine/entity.hpp"
 #include "term_engine/events.hpp"
-#include "term_engine/world.hpp"
 #include "term_engine/triggers.hpp"
+#include "term_engine/world.hpp"
 
 #include <cstddef>
 #include <memory>
@@ -52,7 +52,8 @@ class Application final {
     inline constexpr void addEntity(std::shared_ptr<T> &entity) {
         static_assert(std::is_base_of<Entity, T>::value,
                       "T must be derived from Entity");
-        m_world.addEntity(std::dynamic_pointer_cast<Entity>(entity), typeid(T).hash_code());
+        m_world.addEntity(std::dynamic_pointer_cast<Entity>(entity),
+                          typeid(T).hash_code());
 
         if (m_entities_deferred_initialization.should_store_entities) {
             m_entities_deferred_initialization.entities_for_init.push_back(
@@ -102,6 +103,17 @@ class Application final {
         static_assert(std::is_base_of<Entity, T>::value,
                       "T must be derived from Entity");
         return m_world.getEntities<T>();
+    }
+
+    /*! 
+        @brief Добавляет триггер в мир.
+        @param[in] trigger триггер для добавления.
+    */
+    template <typename T>
+    inline constexpr void addTrigger(std::shared_ptr<T> &trigger) {
+        static_assert(std::is_base_of<ITrigger, T>::value,
+                      "T must be derived from ITrigger");
+        m_world.addTrigger(std::dynamic_pointer_cast<ITrigger>(trigger));
     }
 
   private:

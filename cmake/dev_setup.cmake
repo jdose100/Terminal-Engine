@@ -11,7 +11,15 @@ set(
     ${CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES}
 )
 
-if (CMAKE_EXPORT_COMPILE_COMMANDS AND NOT ${TERM_ENGINE_DEV_INDEXER_ALREADY})
+include_directories(
+    ${CMAKE_CXX_STANDARD_INCLUDE_DIRECTIORIES}
+    ${CMAKE_BINARY_DIR}/_deps/catch2-src
+    ${CMAKE_BINARY_DIR}/_deps/ftxui-src
+    ${CMAKE_BINARY_DIR}/_deps/glm-src
+    ${PROJECT_SOURCE_DIR}/include
+)
+
+if (CMAKE_EXPORT_COMPILE_COMMANDS)
     # Добавление исполняемого файла для более корректной
     # настройки compile_commands.json.
     add_executable(
@@ -24,6 +32,4 @@ if (CMAKE_EXPORT_COMPILE_COMMANDS AND NOT ${TERM_ENGINE_DEV_INDEXER_ALREADY})
     set_target_properties(
         clangd_header_indexer PROPERTIES EXCLUDE_FROM_ALL TRUE
     )
-    
-    set(TERM_ENGINE_DEV_INDEXER_ALREADY TRUE)
 endif ()
